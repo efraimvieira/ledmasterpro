@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LED Master Tool - V10 FINAL</title>
+    <style>
+        :root { --accent: #00ffcc; --bg: #0a0a0a; --card: #161616; --input: #222; --text: #eee; --warn: #ffcc00; --danger: #ff4444; --safe: #2ecc71; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 15px; margin: 0; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 500px; background: var(--card); border-radius: 25px; padding: 25px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 1px solid #333; height: fit-content; position: relative; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        h2 { text-align: center; color: var(--accent); font-weight: 300; letter-spacing: 3px; margin-bottom: 30px; }
+        .menu-grid { display: grid; gap: 15px; margin-top: 20px; }
+        .menu-btn { background: #111; border: 1px solid #333; padding: 25px; border-radius: 20px; color: white; cursor: pointer; transition: 0.3s; text-align: left; }
+        .menu-btn:active { transform: scale(0.98); background: #1a1a1a; }
+        .menu-btn b { display: block; color: var(--accent); font-size: 1.2em; margin-bottom: 5px; }
+        .menu-btn small { color: #666; font-size: 0.85em; }
+
+        /* Estrutura da Calculadora */
+        .section { margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 20px; }
+        .section-header { font-size: 0.75em; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-bottom: 15px; }
+        .row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .col { flex: 1; }
+        label { font-size: 0.8em; color: #888; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; background: var(--input); border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; font-size: 1em; box-sizing: border-box; outline: none; }
+        
+        .fader-box { background: #111; padding: 15px; border-radius: 12px; margin: 10px 0; }
+        .fader { -webkit-appearance: none; width: 100%; height: 6px; background: #333; border-radius: 50px; outline: none; }
+        .fader::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: #fff; border: 4px solid var(--accent); border-radius: 50%; cursor: pointer; }
+
+        .logistics-hub { background: #1a1a1a; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px solid #333; display: flex; flex-direction: column; gap: 10px; }
+        .log-top-row { display: flex; justify-content: space-around; text-align: center; }
+        .log-bottom-row { text-align: center; border-top: 1px solid #333; padding-top: 10px; }
+        .log-item b { display: block; font-size: 1.3em; color: var(--accent); }
+        .log-item span { font-size: 0.6em; color: #666; text-transform: uppercase; }
+
+        .results { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .stat-box { background: #0d0d0d; border: 1px solid #222; padding: 15px; border-radius: 15px; text-align: center; }
+        .stat-val { display: block; font-size: 1.6em; font-weight: bold; color: var(--accent); }
+        
+        .btn-action { width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; transition: 0.3s; }
+        .btn-copy { background: var(--accent); color: #000; }
+        .btn-back { background: #222; color: #888; margin-bottom: 20px; }
+        .btn-copy-all { background: transparent; color: #ffffff; border: 2px solid var(--accent); margin-top: 20px; }
+        .btn-reset { background: #331111; color: var(--danger); font-size: 0.7em; padding: 10px; border: 1px solid var(--danger); }
+        .btn-fullscreen { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #444; font-size: 1.2em; cursor: pointer; }
+        
+        .hub-item { background: #111; padding: 15px; border-radius: 15px; border: 1px solid #222; margin-bottom: 15px; }
+        .res-display { background: #000; color: var(--accent); padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.1em; margin-top: 10px; text-align: center; border: 1px dashed #333; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <button class="btn-fullscreen" onclick="toggleFS()">⛶</button>
+
+        <div id="screen-home" class="screen active">
+            <h2>LED MASTER <small style="opacity: 0.5;">PRO V10</small></h2>
+            <div class="menu-grid">
+                <button class="menu-btn" onclick="nav('screen-calc')">
+                    <b>📊 LED CALCULATOR</b>
+                    <small>Resolução, Elétrica e Logística</small>
+                </button>
+                <button class="menu-btn" onclick="nav('screen-hub')">
+                    <b>🛠️ ENGINEERING HUB</b>
+                    <small>Aspect Ratio, Rigging e Processamento</small>
+                </button>
+            </div>
+        </div>
+
+        <div id="screen-calc" class="screen">
+            <button class="btn-action btn-back" onclick="nav('screen-home')">← VOLTAR AO MENU</button>
+            <h2>LED CALCULATOR</h2>
+
+            <div class="section">
+                <div class="section-header">Configuração Física</div>
+                <div class="row">
+                    <div class="col"><label>Resolução em Pixel (L x A)</label>
+                        <div style="display:flex; gap:5px;"><input type="number" id="w" value="128" oninput="sync()"><input type="number" id="h" value="128" oninput="sync()"></div>
+                    </div>
+                    <div class="col"><label>Freq. / Tipo</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="hz" onchange="sync()"><option value="655360">60 Hz</option><option value="786432">50 Hz</option></select>
+                            <select id="env-type" onchange="sync()"><option value="300">Indoor</option><option value="600">Outdoor</option></select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col"><label>Tipo de Painel (Pitch)</label>
+                        <select id="pitch" onchange="sync()">
+                            <option value="2.9">P2.9</option><option value="3.9" selected>P3.9</option><option value="4.8">P4.8</option>
+                        </select>
+                    </div>
+                    <div class="col"><label>Visão (Mín - Ideal)</label><input type="text" id="view-dist" readonly style="color:var(--accent); text-align:center;"></div>
+                </div>
+
+                <div class="row" style="background: #111; padding: 12px; border-radius: 15px; border: 1px solid #222; flex-direction: column;">
+                    <label>Tamanho Tela (Metros)</label>
+                    <div style="display:flex; gap:5px; margin-bottom: 10px;">
+                        <input type="number" id="gridW" placeholder="L" oninput="sync()">
+                        <input type="number" id="gridH" placeholder="A" oninput="sync()">
+                    </div>
+                    <div class="logistics-hub">
+                        <div class="log-top-row">
+                            <div class="log-item"><span>Energia (Cores)</span><b id="res-cables-ac">0</b></div>
+                            <div class="log-item"><span>Rede (Data)</span><b id="res-cables-data">0</b></div>
+                        </div>
+                        <div class="log-bottom-row">
+                            <div class="log-item"><span>Carga por Porta</span><b id="res-load-pct">0%</b></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">Elétrica & Brilho</div>
+                <div class="row">
+                    <div class="col"><label>Qtd Placas</label><input type="number" id="qty" value="0" oninput="sync()"></div>
+                    <div class="col"><label>Voltagem (V)</label><select id="volts" onchange="sync()"><option value="220">220V</option><option value="110">110V</option></select></div>
+                </div>
+                <div class="fader-box">
+                    <label>Brilho: <span id="brilho-val" style="color:var(--accent)">100%</span></label>
+                    <input type="range" min="1" max="100" value="100" class="fader" id="brilho" oninput="sync()">
+                </div>
+            </div>
+
+            <div class="results">
+                <div class="stat-box"><label>Amperagem</label><span class="stat-val" id="res-amp">0A</span></div>
+                <div class="stat-box"><label>Peso Total</label><span class="stat-val" id="res-weight">0kg</span></div>
+            </div>
+            <button class="btn-action btn-copy" onclick="copyCalculatorReport()">📋 Copiar Relatório LED</button>
+        </div>
+
+        <div id="screen-hub" class="screen">
+            <button class="btn-action btn-back" onclick="nav('screen-home')">← VOLTAR AO MENU</button>
+            <h2>ENGINEERING HUB</h2>
+
+            <div class="hub-item">
+                <label>📐 ASPECT RATIO & PROPORÇÃO</label>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col"><input type="number" id="arW" placeholder="Pixels L" oninput="calcAR()"></div>
+                    <div class="col"><input type="number" id="arH" placeholder="Pixels A" oninput="calcAR()"></div>
+                </div>
+                <div class="res-display" id="ar-result">Proporção: -</div>
+            </div>
+
+            <div class="hub-item">
+                <label>🏗️ RIGGING & CARGA (POR COLUNA)</label>
+                <div class="row" style="margin-top:10px;">
+                    <div class="col"><label>Placas/Coluna</label><input type="number" id="rigQty" oninput="calcRig()"></div>
+                    <div class="col"><label>Peso/Placa</label><input type="number" id="rigWgt" value="12" oninput="calcRig()"></div>
+                </div>
+                <div class="res-display" id="rig-result">Carga no Ponto: 0kg</div>
+            </div>
+
+            <div class="hub-item">
+                <label>🖥️ SUGESTÃO DE PROCESSADORA</label>
+                <div class="res-display" id="hub-proc-sugest" style="color: var(--warn);">Nenhum dado na calculadora...</div>
+            </div>
+
+            <button class="btn-action btn-copy-all" id="btn-hub-copy" onclick="copyHubOnlyReport()">💾 COPIAR DADOS DO HUB</button>
+            <button class="btn-action btn-reset" onclick="resetAll()">⚠️ RESETAR TODOS OS DADOS</button>
+        </div>
+    </div>
+
+<script>
+    function nav(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'screen-hub') updateProcSugest();
+    }
+
+    function sync() {
+        const w = parseFloat(document.getElementById('w').value) || 0;
+        const h = parseFloat(document.getElementById('h').value) || 0;
+        const gw = parseFloat(document.getElementById('gridW').value) || 0;
+        const gh = parseFloat(document.getElementById('gridH').value) || 0;
+        const hzLimit = parseFloat(document.getElementById('hz').value);
+        const volt = parseFloat(document.getElementById('volts').value);
+        const envWatt = parseFloat(document.getElementById('env-type').value);
+        const bri = document.getElementById('brilho').value / 100;
+        const pitch = parseFloat(document.getElementById('pitch').value);
+        
+        if(gw > 0 && gh > 0) {
+            document.getElementById('qty').value = Math.ceil(gw / 0.5) * Math.ceil(gh / 1.0);
+        }
+        
+        const qty = parseFloat(document.getElementById('qty').value) || 0;
+        document.getElementById('brilho-val').innerText = (bri * 100) + '%';
+        document.getElementById('view-dist').value = `${(pitch * 1).toFixed(1)}m - ${(pitch * 2.5).toFixed(1)}m`;
+
+        if (qty > 0) {
+            const watts = qty * envWatt * (0.15 + 0.85 * bri);
+            document.getElementById('res-amp').innerText = (watts / volt).toFixed(1) + 'A';
+            document.getElementById('res-weight').innerText = (qty * 12) + 'kg';
+            
+            const pxPerPanel = w * h;
+            if(pxPerPanel > 0) {
+                const panelsPerPort = Math.floor(hzLimit / pxPerPanel);
+                const dataCables = Math.ceil(qty / panelsPerPort) || 1;
+                document.getElementById('res-cables-data').innerText = dataCables;
+                document.getElementById('res-load-pct').innerText = Math.round(((qty / dataCables) * pxPerPanel / hzLimit) * 100) + '%';
+            }
+            document.getElementById('res-cables-ac').innerText = Math.ceil(qty / (volt == 220 ? 12 : 6));
+        }
+    }
+
+    function updateProcSugest() {
+        const cables = parseInt(document.getElementById('res-cables-data').innerText) || 0;
+        let msg = "Aguardando dados...";
+        if(cables > 0) {
+            if(cables <= 4) msg = "Use 1x VX4S ou MCTRL300";
+            else if(cables <= 6) msg = "Use 1x VX6S ou VX1000";
+            else msg = `Necessário ${Math.ceil(cables/4)}x VX4S ou similar`;
+        }
+        document.getElementById('hub-proc-sugest').innerText = msg;
+    }
+
+    function calcAR() {
+        const w = document.getElementById('arW').value;
+        const h = document.getElementById('arH').value;
+        if (w && h) {
+            const gcd = (a, b) => b ? gcd(b, a % b) : a;
+            const divisor = gcd(w, h);
+            document.getElementById('ar-result').innerText = `Proporção: ${w/divisor}:${h/divisor}`;
+        }
+    }
+
+    function calcRig() {
+        const q = document.getElementById('rigQty').value || 0;
+        const p = document.getElementById('rigWgt').value || 0;
+        const total = q * p;
+        document.getElementById('rig-result').innerText = `Carga: ${total}kg`;
+        document.getElementById('rig-result').style.color = total > 450 ? 'var(--danger)' : 'var(--accent)';
+    }
+
+    function copyHubOnlyReport() {
+        const text = `🛠️ ENGINEERING HUB\n\n📐 ${document.getElementById('ar-result').innerText}\n🏗️ ${document.getElementById('rig-result').innerText}\n🖥️ ${document.getElementById('hub-proc-sugest').innerText}`;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('btn-hub-copy');
+            btn.innerText = "✅ COPIADO!";
+            setTimeout(() => btn.innerText = "💾 COPIAR DADOS DO HUB", 2000);
+        });
+    }
+
+    function copyCalculatorReport() {
+        const text = `📊 LED REPORT\n⚡ Amp: ${document.getElementById('res-amp').innerText}\n⚖️ Peso: ${document.getElementById('res-weight').innerText}\n🔌 Rede: ${document.getElementById('res-cables-data').innerText} CAT6`;
+        navigator.clipboard.writeText(text);
+        alert("Copiado!");
+    }
+
+    function resetAll() {
+        if(confirm("Deseja limpar todos os campos?")) {
+            document.querySelectorAll('input').forEach(i => i.value = "");
+            document.querySelectorAll('.stat-val').forEach(s => s.innerText = "0");
+            document.getElementById('rigWgt').value = "12";
+            sync();
+        }
+    }
+
+    function toggleFS() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+    }
+
+    sync();
+</script>
+</body>
+</html>
